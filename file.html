@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Link Shortener</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    padding: 25px 15px;
+}
+
+.container {
+    max-width: 550px;
+    margin: 35px auto;
+    background: white;
+    padding: 30px 22px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+h1 {
+    text-align: center;
+    color: #5636a5;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #6546c7;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.generate {
+    width: 100%;
+}
+
+.result {
+    display: none;
+    margin-top: 22px;
+    padding: 18px;
+    background: #f1edff;
+    border-radius: 10px;
+    overflow-wrap: anywhere;
+}
+
+.result h3 {
+    color: #5636a5;
+    margin-bottom: 12px;
+}
+
+.result a {
+    color: #6546c7;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    flex: 1;
+    min-width: 100px;
+}
+
+.stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.stat-box {
+    flex: 1;
+    text-align: center;
+    background: #f7f5ff;
+    padding: 16px 8px;
+    border-radius: 10px;
+}
+
+.stat-box h2 {
+    color: #6546c7;
+    margin-bottom: 5px;
+}
+
+.stat-box p {
+    font-size: 12px;
+    color: #777;
+}
+
+.history {
+    margin-top: 28px;
+}
+
+.history h3 {
+    margin-bottom: 12px;
+    color: #5636a5;
+}
+
+.history-item {
+    background: #f7f5ff;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+}
+
+.history-item a {
+    color: #6546c7;
+}
+
+.footer {
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    margin-top: 25px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔗 Smart Link Shortener</h1>
+    <p class="subtitle">
+        Make your long URLs short and easy to share!
+    </p>
+
+    <label for="longUrl">Enter Your Long URL</label>
+
+    <input
+        type="url"
+        id="longUrl"
+        placeholder="https://example.com"
+    >
+
+    <button class="generate" onclick="generateLink()">
+        Generate Short Link
+    </button>
+
+    <div class="result" id="result">
+
+        <h3>Your Short Link</h3>
+
+        <a id="shortLink" href="#" target="_blank"></a>
+
+        <div class="actions">
+
+            <button onclick="copyLink()">📋 Copy Link</button>
+
+            <button onclick="openLink()">🌐 Open Link</button>
+
+        </div>
+
+    </div>
+
+    <div class="stats">
+
+        <div class="stat-box">
+            <h2 id="totalLinks">0</h2>
+            <p>Total Links</p>
+        </div>
+
+        <div class="stat-box">
+            <h2 id="totalClicks">0</h2>
+            <p>Total Clicks</p>
+        </div>
+
+    </div>
+
+    <div class="history">
+
+        <h3>📊 Recent Links</h3>
+
+        <div id="historyList">
+            No links generated yet.
+        </div>
+
+    </div>
+
+    <p class="footer">
+        Smart Link Shortener | Internship Project
+    </p>
+
+</div>
+
+<script>
+
+let links = JSON.parse(
+    localStorage.getItem("shortLinks") || "[]"
+);
+
+let clicks = Number(
+    localStorage.getItem("totalClicks") || 0
+);
+
+let currentLink = null;
+
+function saveData() {
+    localStorage.setItem(
+        "shortLinks",
+        JSON.stringify(links)
+    );
+
+    localStorage.setItem(
+        "totalClicks",
+        clicks
+    );
+}
+
+function generateLink() {
+
+    const input = document.getElementById("longUrl");
+    const originalUrl = input.value.trim();
+
+    if (!originalUrl) {
+        alert("Please enter a URL!");
+        return;
+    }
+
+    let url;
+
+    try {
+        url = new URL(originalUrl);
+
+        if (!["http:", "https:"].includes(url.protocol)) {
+            throw new Error("Invalid protocol");
+        }
+
+    } catch (error) {
+        alert("Please enter a valid URL starting with https:// or http://");
+        return;
+    }
+
+    const code = Math.random().toString(36).substring(2, 8);
+
+    const shortUrl =
+        window.location.origin +
+        window.location.pathname +
+        "?id=" + code;
+
+    const newLink = {
+        code: code,
+        original: url.href,
+        short: shortUrl
+    };
+
+    links.unshift(newLink);
+
+    saveData();
+
+    currentLink = newLink;
+
+    document.getElementById("shortLink").textContent = shortUrl;
+    document.getElementById("shortLink").href = shortUrl;
+
+    document.getElementById("result").style.display = "block";
+
+    input.value = "";
+
+    updateDashboard();
+}
+
+function copyLink() {
+
+    if (!currentLink) return;
+
+    const text = currentLink.short;
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+            .then(() => alert("Short link copied!"))
+            .catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    temp.remove();
+    alert("Short link copied!");
+}
+
+function openLink() {
+
+    if (!currentLink) return;
+
+    window.open(currentLink.original, "_blank");
+    clicks++;
+
+    saveData();
+    updateDashboard();
+}
+
+function updateDashboard() {
+
+    document.getElementById("totalLinks").textContent =
+        links.length;
+
+    document.getElementById("totalClicks").textContent =
+        clicks;
+
+    const historyList =
+        document.getElementById("historyList");
+
+    historyList.innerHTML = "";
+
+    links.slice(0, 5).forEach(link => {
+
+        const item = document.createElement("div");
+
+        item.className = "history-item";
+
+        const original = document.createElement("div");
+        original.textContent = "Original: " + link.original;
+
+        const short = document.createElement("a");
+        short.href = link.original;
+        short.target = "_blank";
+        short.textContent = "Open original website";
+
+        item.appendChild(original);
+        item.appendChild(short);
+
+        historyList.appendChild(item);
+    });
+
+    if (links.length === 0) {
+        historyList.textContent = "No links generated yet.";
+    }
+}
+
+// Redirect when a generated short-link code is opened.
+function checkRedirect() {
+
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    const code = params.get("id");
+
+    if (!code) return;
+
+    const found = links.find(link => link.code === code);
+
+    if (found) {
+        clicks++;
+        saveData();
+        window.location.replace(found.original);
+    } else {
+        alert("Short link not found on this browser.");
+    }
+}
+
+updateDashboard();
+checkRedirect();
+
+</script>
+
+</body>
+</html>
